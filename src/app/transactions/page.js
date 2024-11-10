@@ -1,4 +1,3 @@
-// src/app/transactions/page.js
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -61,7 +60,7 @@ const TransactionTable = () => {
                 <TableCell>{transaction.to}</TableCell>
                 <TableCell>{transaction.transactionType}</TableCell>
                 <TableCell align="right">
-                  ${transaction.amount.toFixed(2)}
+                  {`RM ${transaction.amount.toFixed(2)}`}
                 </TableCell>
               </TableRow>
             ))}

@@ -2,40 +2,42 @@
 
 import React, { useState } from "react";
 import { useRouter } from 'next/navigation';
+import { useNavbar } from "@/context/NavbarContext";
+import Image from "next/image";
 import CryptoJS from "crypto-js";
 import {
-  Container,
   Box,
-  Typography,
-  TextField,
   Button,
+  Modal,
   Paper,
+  TextField,
+  Typography,
 } from "@mui/material";
 
-const UserLogin = () => {
-  const router = useRouter();
+const LoginFlowModal = () => {
   const [step, setStep] = useState(1);
   const [username, setUsername] = useState("");
-  const [secureWord, setSecureWord] = useState("");
   const [password, setPassword] = useState("");
-  const [loginMessage, setLoginMessage] = useState("");
+  const [secureWord, setSecureWord] = useState("");
+  const [loginMessage, setLoginMessage] = useState("Login successful!");
+  const [open, setOpen] = useState(true);
+  const router = useRouter();
+  const { setShowNavbar } = useNavbar();
 
   const handleUsernameSubmit = async () => {
     const response = await fetch("/api/getSecureWord");
     const data = await response.json();
     setSecureWord(data.secureWord);
-    setStep(2); // Move to the next step to display the secure word
+    setStep(2);
   };
 
   const handleNext = () => {
-    setStep(3); // Move to password input step
+    setStep(3);
   };
 
   const handleLogin = async () => {
-    // Encrypt password before sending
     const encryptedPassword = CryptoJS.SHA256(password).toString();
 
-    // Submit username and encrypted password to the login API
     const response = await fetch("/api/login", {
       method: "POST",
       headers: {
@@ -46,92 +48,128 @@ const UserLogin = () => {
 
     const data = await response.json();
     setLoginMessage(data.message);
-    setStep(4); // Move to the final confirmation step
-    setTimeout(() => { 
-      router.push('/transactions'); // Redirect after login success
+    setStep(4);
+    setTimeout(() => {
+      setShowNavbar(false);
+      router.push('/transactions');
     }, 600);
   };
 
+  const handleClose = () => {
+    setOpen(false);
+    setTimeout(() => {
+      setShowNavbar(true);
+      router.push('/');
+    }, 10);
+  };
+
   return (
-    <Container maxWidth="sm" sx={{ marginTop: 4 }}>
-      <Paper elevation={3} sx={{ padding: 3 }}>
-        <Typography variant="h4" align="center" gutterBottom>
-          Login Flow
-        </Typography>
+    <>
+      <Image
+        src="/ShareLah.png"
+        alt="ShareLah"
+        layout="fill"
+        objectFit="cover"
+        priority
+      />
+      <Modal
+        open={open}
+        onClose={handleClose}
+        closeAfterTransition
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backdropFilter: "blur(5px)",
+        }}
+      >
+        <Paper
+          elevation={3}
+          sx={{
+            padding: 3,
+            maxWidth: "500px",
+            width: "90%", // Responsive width for smaller screens
+          }}
+        >
+          <Typography variant="h4" align="center" gutterBottom>
+            Login
+          </Typography>
 
-        {step === 1 && (
-          <Box display="flex" flexDirection="column" gap={2}>
-            <Typography variant="h6">Step 1: Enter Username</Typography>
-            <TextField
-              label="Username"
-              variant="outlined"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              fullWidth
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleUsernameSubmit}
-              fullWidth
+          {step === 1 && (
+            <Box display="flex" flexDirection="column" gap={2}>
+              <Typography variant="h6">Enter Username</Typography>
+              <TextField
+                label="Username"
+                variant="outlined"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                fullWidth
+              />
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleUsernameSubmit}
+                fullWidth
+              >
+                Submit Username
+              </Button>
+            </Box>
+          )}
+
+          {step === 2 && (
+            <Box display="flex" flexDirection="column" gap={2}>
+              <Typography variant="h6">Verify Secure Word</Typography>
+              <Typography variant="body1">
+                Your secure word is: <strong>{secureWord}</strong>
+              </Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleNext}
+                fullWidth
+              >
+                Next
+              </Button>
+            </Box>
+          )}
+
+          {step === 3 && (
+            <Box display="flex" flexDirection="column" gap={2}>
+              <Typography variant="h6">Enter Password</Typography>
+              <TextField
+                label="Password"
+                variant="outlined"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                fullWidth
+              />
+              <Button
+                id="login-modal-button"
+                variant="contained"
+                color="primary"
+                onClick={handleLogin}
+                fullWidth
+              >
+                Login
+              </Button>
+            </Box>
+          )}
+
+          {step === 4 && (
+            <Box
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              gap={2}
             >
-              Submit Username
-            </Button>
-          </Box>
-        )}
-
-        {step === 2 && (
-          <Box display="flex" flexDirection="column" gap={2}>
-            <Typography variant="h6">Step 2: Secure Word</Typography>
-            <Typography variant="body1">
-              Your secure word is: <strong>{secureWord}</strong>
-            </Typography>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleNext}
-              fullWidth
-            >
-              Next
-            </Button>
-          </Box>
-        )}
-
-        {step === 3 && (
-          <Box display="flex" flexDirection="column" gap={2}>
-            <Typography variant="h6">Step 3: Enter Password</Typography>
-            <TextField
-              label="Password"
-              variant="outlined"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              fullWidth
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleLogin}
-              fullWidth
-            >
-              Login
-            </Button>
-          </Box>
-        )}
-
-        {step === 4 && (
-          <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            gap={2}
-          >
-            <Typography variant="h6">{loginMessage}</Typography>
-          </Box>
-        )}
-      </Paper>
-    </Container>
+              <Typography variant="h6">{loginMessage}</Typography>
+            </Box>
+          )}
+        </Paper>
+      </Modal>
+    </>
   );
 };
 
-export default UserLogin;
+export default LoginFlowModal;

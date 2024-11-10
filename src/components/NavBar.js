@@ -1,11 +1,8 @@
-// components/Navbar.js
-"use client"; // This makes the file a Client Component
+"use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import IconButton from "@mui/material/IconButton";
-import MenuIcon from "@mui/icons-material/Menu";
-import CloseIcon from "@mui/icons-material/Close";
+import Image from "next/image";
 import {
   AppBar,
   Toolbar,
@@ -14,52 +11,113 @@ import {
   Button,
   TextField,
   Drawer,
+  Stack,
+  List,
+  ListItem,
+  ListItemText,
+  IconButton,
 } from "@mui/material";
+import { useMobile } from "@/context/MobileContext";
+import { useNavbar } from "@/context/NavbarContext";
+import MenuIcon from "@mui/icons-material/Menu";
+import CloseIcon from "@mui/icons-material/Close";
+import SearchIcon from "@mui/icons-material/Search";
 
 const Navbar = () => {
+  const isMobile = useMobile();
+  const { showNavbar } = useNavbar();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const consecutiveMarginValue = 1;
+  const navbarOptions = ["Login", "Showcase", "Docs", "Blog", "Analytics", "Templates", "Enterprise"];
 
-  const toggleDrawer = () => {
-    setDrawerOpen(!drawerOpen);
+  const toggleDrawer = (val) => {
+    setDrawerOpen(val);
   };
 
-  return (
-    <AppBar position="fixed">
-      <Toolbar>
-        <IconButton edge="start" color="inherit" onClick={toggleDrawer}>
-          {drawerOpen ? <CloseIcon /> : <MenuIcon />}
-        </IconButton>
-        <Typography variant="h6" sx={{ flexGrow: 1, marginLeft: 2 }}>
-          MyApp
-        </Typography>
-        <Box sx={{ display: { xs: "none", sm: "block" }, marginRight: 2 }}>
-          <TextField placeholder="Search..." variant="outlined" size="small" />
-        </Box>
-        <Link href="/userLogin" passHref>
-          <Button color="inherit">Login</Button>
-        </Link>
-      </Toolbar>
+  useEffect(() => {
+    if (!isMobile) {
+      setDrawerOpen(false);
+    }
+  }, [isMobile]);
 
-      {/* Collapsible Drawer for Mobile View */}
-      <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer}>
-        <Box sx={{ width: 250, padding: 2 }}>
-          <Typography variant="h6">MyApp</Typography>
-          <Box sx={{ my: 2 }}>
-            <TextField
-              placeholder="Search..."
-              fullWidth
-              variant="outlined"
-              size="small"
-            />
-          </Box>
+  const renderDesktopMenu = () => (
+    <Stack direction="row" alignItems="center" sx={{ flexGrow: 1, display: isMobile ? 'none' : 'flex' }}>
+      <Image src="/aeon-logo.png" alt="Next.js logo" width={160} height={50} priority />
+      {navbarOptions.map((text, index) => (
+        <Typography key={text} color="black" sx={{ marginLeft: index === 0 ? 5 : consecutiveMarginValue, flexGrow: text === "Enterprise" ? 1 : 0 }}>
           <Link href="/userLogin" passHref>
-            <Button color="inherit" onClick={toggleDrawer}>
-              Login
-            </Button>
+            <Button id={`${text}-desktop-button`} color="inherit">{text}</Button>
           </Link>
-        </Box>
-      </Drawer>
-    </AppBar>
+        </Typography>
+      ))}
+      <Box sx={{ display: { xs: "none", sm: "block" }, marginRight: 2 }}>
+        <TextField placeholder="Search..." variant="outlined" size="small" />
+      </Box>
+    </Stack>
+  );
+
+  const renderMobileMenu = () => (
+    <>
+      <Stack direction="row" alignItems="center" sx={{ flexGrow: 1, padding: '7px' }}>
+        <Image src="/aeon-logo.png" alt="Next.js logo" width={140} height={50} priority />
+      </Stack>
+      <IconButton id="search-mobile-button" edge="start" color="primary">
+        <SearchIcon />
+      </IconButton>
+      <IconButton id="hamburger-mobile-button" edge="start" color="primary" onClick={() => toggleDrawer(true)}>
+        <MenuIcon />
+      </IconButton>
+    </>
+  );
+
+  const renderDrawer = () => (
+    <Drawer
+      data-testid="drawer-menu-mobile"
+      anchor="top"
+      open={drawerOpen && isMobile}
+      onClose={() => toggleDrawer(false)}
+      ModalProps={{ keepMounted: true }}
+      PaperProps={{
+        sx: {
+          width: "100vw",
+          height: "100vh",
+          backgroundColor: "background.default",
+        },
+      }}
+      variant="temporary"
+    >
+      <Box onClick={() => toggleDrawer(false)} sx={{ textAlign: "left", padding: 2 }}>
+        <Stack direction="row" alignItems="center">
+          <Typography sx={{ flexGrow: 1 }}>
+            <Image src="/aeon-logo.png" alt="Next.js logo" width={160} height={50} priority />
+          </Typography>
+          <IconButton id="search-drawer-button" edge="start" color="primary" onClick={() => toggleDrawer(false)}>
+            <SearchIcon />
+          </IconButton>
+          <IconButton id="close-drawer-button" edge="start" color="primary" onClick={() => toggleDrawer(false)}>
+            <CloseIcon />
+          </IconButton>
+        </Stack>
+        <List>
+          {navbarOptions.map((text) => (
+            <ListItem role="button" id={`${text}-mobile-menu`} key={text}>
+              <Link href="/userLogin">
+                <ListItemText primary={text} />
+              </Link>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+    </Drawer>
+  );
+
+  return (showNavbar ?
+    <AppBar id="navbar" role="banner" position="fixed" style={{ backgroundColor: "whitesmoke" }}>
+      <Toolbar>
+        {isMobile ? renderMobileMenu() : renderDesktopMenu()}
+      </Toolbar>
+      {renderDrawer()}
+    </AppBar> : <></>
   );
 };
 
